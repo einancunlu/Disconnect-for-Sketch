@@ -1,6 +1,6 @@
 # Disconnect for Sketch
 
-Check out [my Medium post](http://sketchtoolbox.com) for details.
+Check out [my Medium post](https://medium.com/@einancunlu/disconnect-for-sketch-sketch-plugins-should-look-great-too-5668276a4014#.r7stxhjm7) for details.
 
 ## Installation
 
