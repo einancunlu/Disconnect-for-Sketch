@@ -1,0 +1,24 @@
+{
+	"name": "Disconnect",
+	"description": "Disconnect/unlink selection from symbols and shared styles.",
+    "author": "Emin Inanc Unlu",
+	"homepage": "",
+    "version": 1.0,
+	"compatibleVersion": 3.4,
+    "identifier": "com.einancunlu.sketch-plugins.disconnect",
+    "commands": [
+        {
+            "handler": "disconnect",
+            "identifier": "disconnect",
+            "name": "Disconnect",
+			"shortcut": "shift control alt d",
+            "script": "main.cocoascript"
+        }
+    ],
+    "menu": {
+		"isRoot": true,
+        "items": [
+  	      "disconnect"
+        ]
+    }
+}

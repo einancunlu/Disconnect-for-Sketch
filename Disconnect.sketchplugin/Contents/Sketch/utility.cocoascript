@@ -1,0 +1,150 @@
+
+
+// The codes here are mostly taken from different resources.
+
+
+/* 
+The MIT License (MIT)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
+
+function removeLayer(layer) {
+	
+  var parent = [layer parentGroup]
+  if (parent)[parent removeLayer: layer]
+}
+
+function addLayer(name, type, parent) {
+	
+  var parent = parent ? parent : stage,
+    layer = [parent addLayerOfType: type]
+  if (name)[layer setName: name]
+  return layer
+}
+
+function addGroup(name, parent) {
+	
+  return addLayer(name, 'group', parent)
+}
+
+function isInt(value) {
+	
+  return !isNaN(value) && 
+         parseInt(Number(value)) == value && 
+         !isNaN(parseInt(value, 10))
+}
+
+function saveObjectToUserDefaults(object, key) {
+	
+	var configs  = [NSMutableDictionary dictionary]
+	[configs setObject: object forKey: key]
+	[defaults registerDefaults: configs]
+	[defaults synchronize]
+}
+
+function setLayerSizeEqualToReferenceLayer(layer, referenceLayer) {
+	
+	var rect = [referenceLayer absoluteRect]
+	[[layer absoluteRect] setX: [rect x]]
+	[[layer absoluteRect] setY: [rect y]]
+	[[layer absoluteRect] setWidth: [rect width]]
+	[[layer absoluteRect] setHeight: [rect height]]
+}
+
+
+//------------------------------------------
+//  Working with Files and Directories
+//------------------------------------------
+
+
+function getTempFolderPath(withName) {
+	
+	var fileManager = [NSFileManager defaultManager]
+	var cachesURL = [[fileManager URLsForDirectory: NSCachesDirectory inDomains: NSUserDomainMask] lastObject]
+	if(typeof withName !== 'undefined') return [[cachesURL URLByAppendingPathComponent: kPluginDomain] path] + "/" + withName
+	return [[cachesURL URLByAppendingPathComponent: kPluginDomain] path] + "/" + [[NSDate date] timeIntervalSince1970]
+}
+
+function createFolderAtPath(pathString) {
+	
+	var fileManager = [NSFileManager defaultManager]
+	if([fileManager fileExistsAtPath: pathString]) return true
+	return [fileManager createDirectoryAtPath: pathString withIntermediateDirectories:true attributes:nil error:nil]
+}
+
+function cleanUpTempFolder(folderPath) {
+	
+	[[NSFileManager defaultManager] removeItemAtPath: folderPath error:nil]
+}
+
+function writeTextToFile(text, filePath) {
+	
+	var t = [NSString stringWithFormat:@"%@", text],
+		f = [NSString stringWithFormat:@"%@", filePath]
+    return [t writeToFile:f atomically: true encoding: NSUTF8StringEncoding error: nil]
+}
+
+function jsonFromFile(filePath) {
+	
+	var data = [NSData dataWithContentsOfFile: filePath]
+	return [NSJSONSerialization JSONObjectWithData: data options: 0 error: nil]
+}
+
+
+//------------------------------------------
+//  Communicating with Binary Helper App
+//------------------------------------------
+
+
+function sendParamsToHelperApp(appName, params, tempFolderPath) {
+	
+	var appPath = scriptFolder + "/" + appName,
+		uniqueID = [[NSUUID UUID] UUIDString],
+		bundlePath = [[NSBundle mainBundle] bundlePath],
+		appName = [[NSFileManager defaultManager] displayNameAtPath: bundlePath],
+		d = [NSMutableDictionary new],
+		val
+	
+	if (typeof tempFolderPath == 'undefined') {
+		tempFolderPath = getTempFolderPath("temp-commands/"+uniqueID)
+	}
+	
+	var jsonPath = tempFolderPath + "/pl.skjs"
+	
+	for (var key in params) {
+		val = params[key]
+		[d setValue:val forKey:key]
+	}
+	[d setValue:scriptPath forKey: "scriptPath"]
+	[d setValue:scriptFolder forKey: "scriptFolder"]
+	[d setValue:appName forKey: "appName"]
+	
+	var jData = [NSJSONSerialization dataWithJSONObject: d options: 0 error: nil],
+		jsonString = [[NSString alloc] initWithData: jData encoding: NSUTF8StringEncoding]
+	
+	createFolderAtPath(tempFolderPath)
+	writeTextToFile(jsonString, jsonPath)
+	
+	if(![[NSWorkspace sharedWorkspace] openFile: jsonPath withApplication: appPath andDeactivate:true]]) {
+		[doc showMessage: "Could not launch plugin"]
+	}
+}
+

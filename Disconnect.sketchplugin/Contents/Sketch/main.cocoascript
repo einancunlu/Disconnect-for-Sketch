@@ -1,0 +1,113 @@
+
+
+//
+//  Created by Emin İnanç Ünlü
+//  Copyright (c) 2015 Emin İnanç Ünlü. All rights reserved.
+//
+
+
+@import 'utility.cocoascript'
+
+
+//--------------------------------------
+// Global Variables
+//--------------------------------------
+
+
+var doc,
+	command,
+	app = [NSApplication sharedApplication],
+	defaults = [NSUserDefaults standardUserDefaults],
+	kPluginName = "Disconnect",
+	kPluginDomain = "com.einancunlu.sketch-plugins.disconnect",
+	kHelperWindowSettingsKey = kPluginDomain + ".helperWindowSettings",
+	scriptPath,
+	scriptFolder,
+	kHelperAppName = "PluginHelper.app"
+
+
+//--------------------------------------
+// Menu Commands
+//--------------------------------------
+
+
+function disconnect(context) {
+
+	doc = context.document
+	command = context.command
+	scriptPath = context.scriptPath
+	scriptFolder = [scriptPath stringByDeletingLastPathComponent]
+	
+	var selection = context.selection
+	if ([selection count] == 0) {
+		[doc showMessage: "Select something!"]
+		return
+	} 
+
+	var helperWindowSettings = [defaults objectForKey: kHelperWindowSettingsKey]
+	if (!helperWindowSettings) {
+		helperWindowSettings = {
+			groupSymbolsSwtich: 1,
+			layerStylesSwtich: 1,
+			textStylesSwtich: 1
+		}
+	}
+
+	// Create a params object to hold the info to be sent to Plugin Helper.
+	// This object will be converted to JSON and will be accessible in Xcode.
+	var params = {
+		selectionCount: [selection count],
+		settings: helperWindowSettings
+	}
+	
+	// Send parameters to Plugin Helper
+	sendParamsToHelperApp(kHelperAppName, params)
+}
+
+
+//--------------------------------------
+// Plugin Window Functions
+//--------------------------------------
+
+
+function disconnectSelection(context, groupSymbols, layerStyles, textStyles) {
+
+	var newHelperWindowSettings = {
+		groupSymbolsSwtich: groupSymbols,
+		layerStylesSwtich: layerStyles,
+		textStylesSwtich: textStyles
+	}
+	saveObjectToUserDefaults(newHelperWindowSettings, kHelperWindowSettingsKey)
+    for (var i = 0; i < [selection count]; i++) {
+    	var layer = selection.objectAtIndex(i)
+	    var children = layer.children()
+	    for (var j = 0; j < [children count]; j++) {
+	    	var childLayer = children[j]
+			unlink(childLayer, groupSymbols, layerStyles, textStyles)
+		}
+		doc.reloadInspector()
+	}
+	[doc showMessage: "Disconnection process is completed."]
+}
+
+
+//--------------------------------------
+// Helper Functions
+//--------------------------------------
+
+
+function unlink(layer, groupSymbols, layerStyles, textStyles) {
+	
+	if ([layer class] === MSLayerGroup && groupSymbols) {
+		layer.setSharedObjectID(null)
+	} else if ([layer class] === MSTextLayer && textStyles) {
+		if (layer.style != undefined) {
+			layer.style().setSharedObjectID(null)
+		}
+	} else if ([layer class] !== MSLayerGroup && [layer class] !== MSTextLayer && layerStyles){
+		if (layer.style != undefined) {
+			layer.style().setSharedObjectID(null)
+		}
+	}
+}
+
