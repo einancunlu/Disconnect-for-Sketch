@@ -2,7 +2,7 @@
 	"name": "Disconnect",
 	"description": "Disconnect/unlink selection from symbols and shared styles.",
     "author": "Emin Inanc Unlu",
-	"homepage": "",
+	"homepage": "https://github.com/einancunlu/Disconnect-for-Sketch",
     "version": 1.0,
 	"compatibleVersion": 3.4,
     "identifier": "com.einancunlu.sketch-plugins.disconnect",
