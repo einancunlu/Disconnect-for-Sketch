@@ -69,6 +69,22 @@ function setLayerSizeEqualToReferenceLayer(layer, referenceLayer) {
 	[[layer absoluteRect] setHeight: [rect height]]
 }
 
+function checkPluginUpdate() {
+	
+	var manifestFilePath = scriptFolder + "/manifest.json"
+	var manifestJSON = jsonFromFile(manifestFilePath)
+	try {
+		var response = getJSONFromURL('https://raw.githubusercontent.com/einancunlu/Disconnect-for-Sketch/master/Disconnect.sketchplugin/Contents/Sketch/manifest.json')
+		if (response && response.version) {
+			if (response.version != manifestJSON.version) {
+				[doc showMessage:"New plugin update is available! Please redownload the plugin."]
+			}
+		}		
+	} catch (e) {
+		log(e)
+	}
+}
+
 
 //------------------------------------------
 //  Working with Files and Directories
@@ -106,6 +122,14 @@ function jsonFromFile(filePath) {
 	
 	var data = [NSData dataWithContentsOfFile: filePath]
 	return [NSJSONSerialization JSONObjectWithData: data options: 0 error: nil]
+}
+
+function getJSONFromURL(url) {
+	
+	var request = [NSURLRequest requestWithURL:[NSURL URLWithString:url]],
+		response = [NSURLConnection sendSynchronousRequest:request returningResponse:nil error:nil],
+		responseObj = [NSJSONSerialization JSONObjectWithData:response options:nil error:nil]
+	return responseObj
 }
 
 

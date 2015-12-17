@@ -37,7 +37,7 @@ function disconnect(context) {
 	command = context.command
 	scriptPath = context.scriptPath
 	scriptFolder = [scriptPath stringByDeletingLastPathComponent]
-	
+	checkPluginUpdate()
 	var selection = context.selection
 	if ([selection count] == 0) {
 		[doc showMessage: "Select something!"]
