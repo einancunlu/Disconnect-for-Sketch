@@ -72,7 +72,7 @@ function setLayerSizeEqualToReferenceLayer(layer, referenceLayer) {
 function checkPluginUpdate() {
 	
 	var manifestFilePath = scriptFolder + "/manifest.json"
-	var manifestJSON = jsonFromFile(manifestFilePath)
+	var manifestJSON = getJSONFromFile(manifestFilePath)
 	var isThereNewUpdate = false
 	try {
 		var response = getJSONFromURL('https://raw.githubusercontent.com/einancunlu/Disconnect-for-Sketch/master/Disconnect.sketchplugin/Contents/Sketch/manifest.json')
@@ -83,8 +83,29 @@ function checkPluginUpdate() {
 		}		
 	} catch (e) {
 		log(e)
+		return false
 	}
 	return isThereNewUpdate
+}
+
+
+//--------------------------------------
+// JSON
+//--------------------------------------
+
+
+function getJSONFromFile(filePath) {
+	
+	var data = [NSData dataWithContentsOfFile: filePath]
+	return [NSJSONSerialization JSONObjectWithData: data options: 0 error: nil]
+}
+
+function getJSONFromURL(url) {
+	
+	var request = [NSURLRequest requestWithURL: [NSURL URLWithString:url]],
+		response = [NSURLConnection sendSynchronousRequest: request returningResponse: nil error: nil],
+		responseObj = [NSJSONSerialization JSONObjectWithData: response options: nil error: nil]
+	return responseObj
 }
 
 
@@ -120,27 +141,13 @@ function writeTextToFile(text, filePath) {
     return [t writeToFile:f atomically: true encoding: NSUTF8StringEncoding error: nil]
 }
 
-function jsonFromFile(filePath) {
-	
-	var data = [NSData dataWithContentsOfFile: filePath]
-	return [NSJSONSerialization JSONObjectWithData: data options: 0 error: nil]
-}
-
-function getJSONFromURL(url) {
-	
-	var request = [NSURLRequest requestWithURL:[NSURL URLWithString:url]],
-		response = [NSURLConnection sendSynchronousRequest:request returningResponse:nil error:nil],
-		responseObj = [NSJSONSerialization JSONObjectWithData:response options:nil error:nil]
-	return responseObj
-}
-
 
 //------------------------------------------
 //  Communicating with Binary Helper App
 //------------------------------------------
 
 
-function sendParamsToHelperApp(appName, params, tempFolderPath) {
+function sendParamsToHelperApp(context, appName, params, tempFolderPath) {
 	
 	var appPath = scriptFolder + "/" + appName,
 		uniqueID = [[NSUUID UUID] UUIDString],
@@ -168,9 +175,45 @@ function sendParamsToHelperApp(appName, params, tempFolderPath) {
 	
 	createFolderAtPath(tempFolderPath)
 	writeTextToFile(jsonString, jsonPath)
-	
+ 
 	if(![[NSWorkspace sharedWorkspace] openFile: jsonPath withApplication: appPath andDeactivate:true]]) {
-		[doc showMessage: "Could not launch plugin"]
+		// If can't launch the helper app
+		var alert = [COSAlertWindow new]
+		var suffix = params["selectionCount"] > 1 ? "s" : ""
+		alert.setMessageText("Disconnect selection" + suffix + " from:")
+		
+		var params = params["settings"] 
+		alert.addAccessoryView(createCheckbox("Group Symbols", params["groupSymbolsSwtich"], "1"))
+		alert.addAccessoryView(createCheckbox("Layer Styles", params["layerStylesSwtich"], "2"))
+		alert.addAccessoryView(createCheckbox("Text Styles", params["textStylesSwtich"], "3"))
+		
+		alert.addButtonWithTitle('Proceed') 
+		alert.addButtonWithTitle("Cancel") 
+		
+		var responseCode = alert.runModal() 
+		if (responseCode == 1000) { 
+			var groupSymbols = alert.viewAtIndex(0).state()
+			var layerStyles = alert.viewAtIndex(1).state() 
+			var textStyles = alert.viewAtIndex(2).state()
+			disconnectSelection(context, groupSymbols, layerStyles, textStyles)
+		}
 	}
+}
+
+
+//------------------------------------------
+//  UI Components
+//------------------------------------------
+
+
+function createCheckbox(label, flag, keyEquivalent) {
+		
+	flag = (flag == false) ? NSOffState : NSOnState
+	var checkbox = NSButton.alloc().initWithFrame(NSMakeRect(0, 0, 300, 18))
+	checkbox.setButtonType(NSSwitchButton)
+	checkbox.setTitle(label)
+	checkbox.setState(flag)
+	checkbox.setKeyEquivalent(keyEquivalent)
+	return checkbox
 }
 

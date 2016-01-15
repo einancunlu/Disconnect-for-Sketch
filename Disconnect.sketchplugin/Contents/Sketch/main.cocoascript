@@ -38,14 +38,18 @@ SOFTWARE.
 
 var doc,
 	command,
-	app = [NSApplication sharedApplication],
-	defaults = [NSUserDefaults standardUserDefaults],
-	kPluginName = "Disconnect",
-	kPluginDomain = "com.einancunlu.sketch-plugins.disconnect",
-	kHelperWindowSettingsKey = kPluginDomain + ".helperWindowSettings",
+	selection,
 	scriptPath,
 	scriptFolder,
-	kHelperAppName = "PluginHelper.app"
+	app = [NSApplication sharedApplication],
+	defaults = [NSUserDefaults standardUserDefaults],
+	
+	kPluginName = "Disconnect",
+	kHelperAppName = "PluginHelper.app",
+	kPluginDomain = "com.einancunlu.sketch-plugins.disconnect",
+
+	kHelperWindowSettingsKey = kPluginDomain + ".helperWindowSettings",
+	kLastUpdateCheckDayKey = kPluginDomain + ".lastUpdateCheckDayKey"
 
 
 //--------------------------------------
@@ -54,11 +58,8 @@ var doc,
 
 
 function disconnect(context) {
-
-	doc = context.document
-	command = context.command
-	scriptPath = context.scriptPath
-	scriptFolder = [scriptPath stringByDeletingLastPathComponent]
+	
+	initCommand(context)
 	
 	var selection = context.selection
 	if ([selection count] == 0) {
@@ -83,7 +84,40 @@ function disconnect(context) {
 	}
 	
 	// Send parameters to Plugin Helper
-	sendParamsToHelperApp(kHelperAppName, params)
+	sendParamsToHelperApp(context, kHelperAppName, params) 
+}
+
+function feedbackByMail(context) {
+	
+	initCommand(context)
+	
+	var encodedSubject = [NSString stringWithFormat:@"SUBJECT=%@", [@"Feedback on the Disconnect Plugin" stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]],
+	encodedBody = [NSString stringWithFormat:@"BODY=%@", [@"" stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]],
+	encodedTo = [[NSString stringWithFormat:@"apps.einancunlu", @"@gma", @"il.com"] stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding],
+	encodedURLString = [NSString stringWithFormat:@"mailto:%@?%@&%@", encodedTo, encodedSubject, encodedBody],
+	mailtoURL = [NSURL URLWithString:encodedURLString]
+	[[NSWorkspace sharedWorkspace] openURL:mailtoURL] 
+}
+
+function feedbackByTwitter(context) {
+	
+	initCommand(context)
+	
+	var urlString = "https://twitter.com/einancunlu"
+	[[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString: urlString]]
+}
+
+function initCommand(context) {
+	
+	doc = context.document
+	command = context.command 
+	selection = context.selection
+	scriptPath = context.scriptPath
+	scriptFolder = [scriptPath stringByDeletingLastPathComponent]
+	
+	if (isTodayNewDay() && checkPluginUpdate()) {
+		app.displayDialog_withTitle("Please redownload the plugin to install the new version.", "There is a new version of the plugin!")
+	}
 }
 
 
@@ -103,6 +137,7 @@ function disconnectSelection(context, groupSymbols, layerStyles, textStyles) {
 		textStylesSwtich: textStyles
 	}
 	saveObjectToUserDefaults(newHelperWindowSettings, kHelperWindowSettingsKey)
+	selection = context.selection 
     for (var i = 0; i < [selection count]; i++) {
     	var layer = selection.objectAtIndex(i)
 	    var children = layer.children()
@@ -113,11 +148,7 @@ function disconnectSelection(context, groupSymbols, layerStyles, textStyles) {
 		doc.reloadInspector()
 	}
 	
-	var additionalMessage = ""
-	if (checkPluginUpdate()) {
-		additionalMessage = "New plugin update is available! Please redownload the plugin. "
-	}
-	[doc showMessage: additionalMessage + "Disconnection process is completed."]
+	[doc showMessage: "Disconnection process is completed."]
 }
 
 
@@ -138,6 +169,22 @@ function unlink(layer, groupSymbols, layerStyles, textStyles) {
 		if (layer.style != undefined) {
 			layer.style().setSharedObjectID(null)
 		}
+	}
+}
+
+function isTodayNewDay() {
+	
+	var lastUpdateCheckDay = [defaults objectForKey: kLastUpdateCheckDayKey]
+	
+	var formatter = [[NSDateFormatter alloc] init]
+	[formatter setDateStyle: NSDateFormatterShortStyle]
+	var today = [formatter stringFromDate: [NSDate date]]
+	saveObjectToUserDefaults(today, kLastUpdateCheckDayKey)
+	
+	if (lastUpdateCheckDay) {
+		return lastUpdateCheckDay != today
+	} else {
+		return true
 	}
 }
 

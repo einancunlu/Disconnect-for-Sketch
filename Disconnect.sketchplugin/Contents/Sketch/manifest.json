@@ -3,7 +3,7 @@
 	"description": "Disconnect/unlink selection from symbols and shared styles.",
     "author": "Emin Inanc Unlu",
 	"homepage": "https://github.com/einancunlu/Disconnect-for-Sketch",
-    "version": 1.0,
+    "version": 1.1,
 	"compatibleVersion": 3.4,
     "identifier": "com.einancunlu.sketch-plugins.disconnect",
     "commands": [
@@ -13,12 +13,33 @@
             "name": "Disconnect",
 			"shortcut": "shift control alt d",
             "script": "main.cocoascript"
+        },
+        {
+            "handler": "feedbackByMail",
+            "identifier": "feedbackByMail",
+            "name": "Mail", 
+			"shortcut" : "",
+            "script": "main.cocoascript"
+        },
+        {
+            "handler": "feedbackByTwitter",
+            "identifier": "feedbackByTwitter",
+            "name": "Twitter", 
+			"shortcut" : "",
+            "script": "main.cocoascript"
         }
     ],
-    "menu": {
-		"isRoot": true,
+    "menu": { 
+		"title": "Disconnect",
         "items": [
-  	      "disconnect"
+			"disconnect",
+			{
+				"title": "Feedback / Contact",
+				"items": [
+					"feedbackByMail",
+					"feedbackByTwitter"
+				]
+			}
         ]
     }
 }
