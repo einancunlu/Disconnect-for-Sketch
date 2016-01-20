@@ -77,7 +77,7 @@ function checkPluginUpdate() {
 	try {
 		var response = getJSONFromURL('https://raw.githubusercontent.com/einancunlu/Disconnect-for-Sketch/master/Disconnect.sketchplugin/Contents/Sketch/manifest.json')
 		if (response && response.version) {
-			if (response.version != manifestJSON.version) {
+			if (response.version.toString() != manifestJSON.version.toString()) {
 				isThereNewUpdate = true
 			}
 		}		

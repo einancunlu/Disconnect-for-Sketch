@@ -4,6 +4,9 @@ Check out [my Medium post](https://medium.com/@einancunlu/disconnect-for-sketch-
 
 # Changelog
 
+## v1.2
+- Fixed a bug which causes false update warning.
+
 ## v1.1
 - Faster operations. (Now it checks updates once a day instead of checking it before every operation.)
 - Bug fixed caused by update check when there is no internet connection.
