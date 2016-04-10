@@ -1,8 +1,11 @@
 # Disconnect for Sketch
 
-Check out [my Medium post](https://medium.com/@einancunlu/disconnect-for-sketch-sketch-plugins-should-look-great-too-5668276a4014#.r7stxhjm7) for details.
+Check out [my Medium post](https://medium.com/@einancunlu/disconnect-for-sketch-sketch-plugins-should-look-great-too-5668276a4014#.r7stxhjm7) for the details.
 
 # Changelog
+
+## v1.3
+- Added compatibility for Sketch 3.7.
 
 ## v1.2
 - Fixed a bug which causes false update warning.

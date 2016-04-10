@@ -137,17 +137,17 @@ function disconnectSelection(context, groupSymbols, layerStyles, textStyles) {
 		textStylesSwtich: textStyles
 	}
 	saveObjectToUserDefaults(newHelperWindowSettings, kHelperWindowSettingsKey)
+	
 	selection = context.selection 
-    for (var i = 0; i < [selection count]; i++) {
+	for (var i = 0; i < [selection count]; i++) {
     	var layer = selection.objectAtIndex(i)
 	    var children = layer.children()
 	    for (var j = 0; j < [children count]; j++) {
 	    	var childLayer = children[j]
 			unlink(childLayer, groupSymbols, layerStyles, textStyles)
 		}
-		doc.reloadInspector()
 	}
-	
+	doc.reloadInspector()
 	[doc showMessage: "Disconnection process is completed."]
 }
 
@@ -158,17 +158,34 @@ function disconnectSelection(context, groupSymbols, layerStyles, textStyles) {
 
 
 function unlink(layer, groupSymbols, layerStyles, textStyles) {
+	 
+	if (getSketchVersionNumber() >= 370) {
+		if ([layer class] === MSSymbolInstance && groupSymbols) {
+			detachSymbolInstance(layer, groupSymbols, layerStyles, textStyles)
+		}
+	} else {
+		if ([layer class] === MSLayerGroup && groupSymbols) {
+			layer.setSharedObjectID(null)
+		} 
+	}
+	if ([layer class] === MSTextLayer && textStyles) {
+		if (layer.style != undefined) {
+			layer.style().setSharedObjectID(null)
+		}
+	} else if ([layer class] !== MSLayerGroup && [layer class] !== MSTextLayer && layerStyles) {
+		if (layer.style != undefined) {
+			layer.style().setSharedObjectID(null)
+		}
+	}
+}
+
+function detachSymbolInstance(layer, groupSymbols, layerStyles, textStyles) {
 	
-	if ([layer class] === MSLayerGroup && groupSymbols) {
-		layer.setSharedObjectID(null)
-	} else if ([layer class] === MSTextLayer && textStyles) {
-		if (layer.style != undefined) {
-			layer.style().setSharedObjectID(null)
-		}
-	} else if ([layer class] !== MSLayerGroup && [layer class] !== MSTextLayer && layerStyles){
-		if (layer.style != undefined) {
-			layer.style().setSharedObjectID(null)
-		}
+	var detachedGroup = layer.detachByReplacingWithGroup()
+	var children = detachedGroup.children()
+    for (var i = 0; i < [children count]; i++) {
+    	var childLayer = children.objectAtIndex(i)
+		unlink(childLayer, groupSymbols, layerStyles, textStyles)
 	}
 }
 

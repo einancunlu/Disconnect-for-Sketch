@@ -69,6 +69,16 @@ function setLayerSizeEqualToReferenceLayer(layer, referenceLayer) {
 	[[layer absoluteRect] setHeight: [rect height]]
 }
 
+function getSketchVersionNumber() {
+	
+	const version = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"]
+	var versionNumber = version.stringByReplacingOccurrencesOfString_withString(".", "") + ""
+	while(versionNumber.length != 3) {
+		versionNumber += "0"
+	}
+	return parseInt(versionNumber)
+}
+
 function checkPluginUpdate() {
 	
 	var manifestFilePath = scriptFolder + "/manifest.json"
